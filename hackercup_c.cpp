@@ -2,6 +2,7 @@
 #include <utility>
 #include <vector>
 #include <queue>
+#include <unordered_set>
 using namespace std;
 
 vector<pair<int, int>> turrets;
@@ -20,18 +21,36 @@ typedef struct game_state{
 	};
 } state_t;
 
+class Hasher{
+	public:
+		size_t operator() (state_t const &key) const{
+			size_t prime = 31;
+			size_t result = 1;
+			result = prime * result + key.step%4;
+			result = prime * result + key.x;
+			result = prime * result + key.y;
+			return result;
+		}
+};
 
-bool is_wall(const state_t m, const int x, const int y){
+class EqualFn{
+	public:
+		bool operator() (state_t const &s1, state_t const &s2) const{
+			return s1.step%4==s2.step%4 && s1.x==s2.x && s1.y==s2.y;
+		}
+};
+
+bool is_wall(const state_t &m, const int x, const int y){
 	if('#'==m.maze[x][y]) return true;
 	else return false;
 }
 
-bool is_turret(const state_t m, const int x, const int y){
+bool is_turret(const state_t &m, const int x, const int y){
 	if('^'==m.maze[x][y] || 'v'==m.maze[x][y] || '<'==m.maze[x][y] || '>'==m.maze[x][y]) return true;
 	else return false;
 }
 
-bool is_goal(const state_t m, const int x, const int y){
+bool is_goal(const state_t &m, const int x, const int y){
 	if('G'==m.maze[x][y]) return true;
 	else return false;
 }
@@ -51,7 +70,7 @@ void rotate_turret(vector<vector<char> > &cur, const int r, const int c){
 	}
 }
 
-bool die(const vector<vector<char> > cur, const int x, const int y){
+bool die(const vector<vector<char> > &cur, const int x, const int y){
 	//cout<<"check current position "<<x<<","<<y<<endl;
 	/*for(int i=0;i<M;++i){
 	  for(int j=0;j<N;++j){
@@ -102,16 +121,23 @@ bool die(const vector<vector<char> > cur, const int x, const int y){
 	return false;
 }
 
+
+
 int bfs(vector<vector<char> > &m, int sx, int sy){
 	queue<state_t> q;
+	unordered_set<state_t, Hasher, EqualFn> tried;
 	q.emplace(state_t(m, sx, sy, 0));
 	while(!q.empty()){
 		state_t cur = q.front();
 		q.pop();
+        tried.insert(cur);
+		
+		//prune
+		
+
 		int x=cur.x;
 		int y=cur.y;
 		int s=cur.step;
-		//cout<<"front: "<<cur.x<<","<<cur.y<<" with step: "<<cur.step<<endl;
 		bool is_first=true;
 		for(int d=0;d<4;++d){
 			int nx=x+direction[d][0];
@@ -137,13 +163,16 @@ int bfs(vector<vector<char> > &m, int sx, int sy){
 				if(is_goal(cur, nx, ny)){
 					return s+1;	
 				}
-				else{
-					cur.x=nx;
-					cur.y=ny;
-					cur.step=s+1;
+				cur.x=nx;
+				cur.y=ny;
+				cur.step=s+1;
+					
+				if(tried.count(cur)==0){
 					//cout<<"emplace with step: "<<cur.step<<endl;
 					q.emplace(cur);
-				}	
+				} else {
+					//cout<<"duplciate front: "<<cur.x<<","<<cur.y<<" with step: "<<cur.step<<endl;
+				}
 			}
 		}
 	}
