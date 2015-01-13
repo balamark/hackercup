@@ -2,7 +2,7 @@
 using namespace std;
 int T, N, gp, gc, gf;
 int arr[20][3];
-//int memo[20][][][]?
+//int memo[20][][][]
 bool is_healthy(int id, int gp_remain, int gc_remain, int gf_remain){
 	//cout<<id<<","<<gp_remain<<","<<gc_remain<<","<<gf_remain<<endl;
 	if(gp_remain<0||gc_remain<0||gf_remain<0){
